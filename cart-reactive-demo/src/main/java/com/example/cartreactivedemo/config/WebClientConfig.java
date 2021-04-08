@@ -1,10 +1,5 @@
 package com.example.cartreactivedemo.config;
 
-import io.netty.channel.ChannelOption;
-import io.netty.handler.ssl.SslContextBuilder;
-import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
-import io.netty.handler.timeout.ReadTimeoutHandler;
-import io.netty.handler.timeout.WriteTimeoutHandler;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -36,32 +31,32 @@ public class WebClientConfig {
                         new ReactorClientHttpConnector(
                                 HttpClient
                                         .create()
-                                        .secure(
-                                                ThrowingConsumer.unchecked(
-                                                        sslContextSpec -> sslContextSpec.sslContext(
-                                                                SslContextBuilder.forClient().trustManager(InsecureTrustManagerFactory.INSTANCE).build()
-                                                        )
-                                                )
-                                        )
-                                        .tcpConfiguration(
-                                                client -> client.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 120_000)
-                                                        .doOnConnected(conn -> conn.addHandlerLast(new ReadTimeoutHandler(180))
-                                                                .addHandlerLast(new WriteTimeoutHandler(180))
-                                                        )
-                                        )
+//                                        .secure(
+//                                                ThrowingConsumer.unchecked(
+//                                                        sslContextSpec -> sslContextSpec.sslContext(
+//                                                                SslContextBuilder.forClient().trustManager(InsecureTrustManagerFactory.INSTANCE).build()
+//                                                        )
+//                                                )
+//                                        )
+//                                        .tcpConfiguration(
+//                                                client -> client.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 120_000)
+//                                                        .doOnConnected(conn -> conn.addHandlerLast(new ReadTimeoutHandler(180))
+//                                                                .addHandlerLast(new WriteTimeoutHandler(180))
+//                                                        )
+//                                        )
                         )
                 )
                 .exchangeStrategies(exchangeStrategies)
                 .filter(ExchangeFilterFunction.ofRequestProcessor(
                         clientRequest -> {
-                            log.debug("Request: {} {}", clientRequest.method(), clientRequest.url());
-                            clientRequest.headers().forEach((name, values) -> values.forEach(value -> log.debug("{} : {}", name, value)));
+                            log.info("Request: {} {}", clientRequest.method(), clientRequest.url());
+                            clientRequest.headers().forEach((name, values) -> values.forEach(value -> log.info("{} : {}", name, value)));
                             return Mono.just(clientRequest);
                         }
                 ))
                 .filter(ExchangeFilterFunction.ofResponseProcessor(
                         clientResponse -> {
-                            clientResponse.headers().asHttpHeaders().forEach((name, values) -> values.forEach(value -> log.debug("{} : {}", name, value)));
+                            clientResponse.headers().asHttpHeaders().forEach((name, values) -> values.forEach(value -> log.info("{} : {}", name, value)));
                             return Mono.just(clientResponse);
                         }
                 ))

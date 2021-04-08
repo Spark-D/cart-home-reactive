@@ -1,10 +1,14 @@
 package com.example.cartreactivedemo.service;
 
 import com.example.cartreactivedemo.dto.OmCart;
+import com.example.cartreactivedemo.dto.ProductReq;
+import com.example.cartreactivedemo.dto.ProductRes;
 import com.example.cartreactivedemo.repository.CartRepository;
+import com.fasterxml.jackson.core.JsonParser;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
+import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -35,14 +39,27 @@ public class CartServiceImpl implements CartService {
 
     @Override
     public Mono<OmCart> findByCartSn(String cartSn) {
-//        builder.build()
-//                .post()
-//                .uri("https://pbf.lotteon.com/product/v1/detail/productDetailList?dataType=LIGHT2")
-//                .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-//                .accept(MediaType.APPLICATION_JSON)
-//                .body()
-//                .retrieve()
-//                .bodyToMono(SomeData.class);
+
+
+        Mono<ProductReq> productReqMono = cartRepository.findById(cartSn)
+                .map(x -> {
+                    ProductReq req = new ProductReq();
+                    req.setSitmNo(x.getSitmNo());
+                    req.setSpdNo(x.getSpdNo());
+                    return req;
+                });
+
+        productReqMono.map(pro -> builder.build()
+                .post()
+                .uri("https://pbf.lotteon.com/product/v1/detail/productDetailList?dataType=LIGHT2")
+                .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                .accept(MediaType.APPLICATION_JSON)
+                .bodyValue(pro)
+                .retrieve()
+                .bodyToMono(ProductRes.class)
+        );
+
+
 
         return cartRepository.findById(cartSn);
     }
