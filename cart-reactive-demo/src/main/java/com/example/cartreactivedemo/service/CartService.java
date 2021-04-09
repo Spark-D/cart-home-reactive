@@ -1,7 +1,8 @@
 package com.example.cartreactivedemo.service;
 
 import com.example.cartreactivedemo.dto.OmCart;
-import org.springframework.stereotype.Service;
+import com.example.cartreactivedemo.dto.api.ProductListRes;
+import com.example.cartreactivedemo.dto.api.ProductRes;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -16,4 +17,8 @@ public interface CartService {
     Mono<OmCart> findByCartSn(String cartSn);
 
     Mono<Void> deleteCart(String cartSn);
+
+    Mono<ProductRes> getApiProdByCartSn(String cartSn);
+
+    Mono<ProductListRes> getGoodsList(Integer pageNo);
 }

@@ -1,4 +1,4 @@
-package com.example.cartreactivedemo.dto;
+package com.example.cartreactivedemo.dto.api;
 
 import lombok.Data;
 

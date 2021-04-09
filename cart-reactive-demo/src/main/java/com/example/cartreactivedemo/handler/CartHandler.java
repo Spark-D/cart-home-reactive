@@ -1,10 +1,9 @@
 package com.example.cartreactivedemo.handler;
 
 import com.example.cartreactivedemo.dto.OmCart;
+import com.example.cartreactivedemo.dto.api.ProductListRes;
 import com.example.cartreactivedemo.service.CartService;
-import lombok.extern.apachecommons.CommonsLog;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
@@ -29,7 +28,7 @@ public class CartHandler {
         String cartSn = serverRequest.pathVariable("cartSn");
 
         return cartService.findByCartSn(cartSn)
-                .flatMap(customer -> ServerResponse.ok().bodyValue(customer))
+                .flatMap(cart -> ServerResponse.ok().bodyValue(cart))
                 .switchIfEmpty(ServerResponse.notFound().build());
     }
 
@@ -65,4 +64,20 @@ public class CartHandler {
     }
 
 
+    public Mono<ServerResponse> getCartItemToProd(ServerRequest serverRequest) {
+        String cartSn = serverRequest.pathVariable("cartSn");
+
+        return cartService.getApiProdByCartSn(cartSn)
+                .flatMap(cart -> ServerResponse.ok().bodyValue(cart))
+                .switchIfEmpty(ServerResponse.notFound().build());
+    }
+
+    public Mono<ServerResponse> getPrdtList(ServerRequest serverRequest) {
+
+        Integer pageNo = Integer.parseInt(serverRequest.pathVariable("pageNo"));
+        Mono<ProductListRes> omCartFlux = cartService.getGoodsList(pageNo);
+
+        return ServerResponse.ok()
+                .body(omCartFlux, ProductListRes.class);
+    }
 }

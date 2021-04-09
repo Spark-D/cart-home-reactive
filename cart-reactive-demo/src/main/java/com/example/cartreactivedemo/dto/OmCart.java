@@ -11,7 +11,7 @@ import javax.swing.*;
 import java.time.LocalDateTime;
 
 @Data
-@Table
+@Table("om_cart")
 @NoArgsConstructor
 @AllArgsConstructor
 public class OmCart {

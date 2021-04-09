@@ -25,8 +25,10 @@ public class CartRouter {
     public RouterFunction<ServerResponse> root(CartHandler handler){
         //RouterFunctions.route()가 제공하는 빌더를 사용.
         return RouterFunctions.route()
+                .GET("/productList/{pageNo}", accept(APPLICATION_JSON), handler::getPrdtList)
                 .GET("/cart", accept(APPLICATION_JSON), handler::getCartList)
                 .GET("cart/{cartSn}", accept(APPLICATION_JSON), handler::getCartItem)
+                .GET("cart/prod/{cartSn}", accept(APPLICATION_JSON), handler::getCartItemToProd)
                 .POST("/cart", accept(APPLICATION_JSON), handler::insertCart)
                 .PUT("/cart/{cartSn}", accept(APPLICATION_JSON), handler::updateCart)
                 .DELETE("/cart/{cartSn}", accept(APPLICATION_JSON), handler::deleteCart)
