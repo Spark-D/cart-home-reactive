@@ -114,6 +114,18 @@ public class CartServiceImpl implements CartService {
 
     }
 
+    @Override
+    public Flux<OmCart> getCartListAll() {
+        return getCartListWithProductList();
+    }
+
+    private Flux<OmCart> getCartListWithProductList() {
+        Flux<OmCart> cartList = cartRepository.findAll();
+        Flux<ProductRes> cartListWithProduct = cartList
+                .flatMap(cart-> this.getProdInfo(cart));
+        return Flux.zip(cartList , cartListWithProduct, (t1,t2)-> t1.withProduct(t2));
+    }
+
     private Mono<OmCart> getProductByCartSn(OmCart omCart) {
         return Mono.just(omCart)
                 .zipWith(this.getProdInfo(omCart).collectList())

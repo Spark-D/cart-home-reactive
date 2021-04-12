@@ -33,6 +33,7 @@ public class CartRouter {
                 .POST("/cart", accept(APPLICATION_JSON), handler::insertCart)
                 .PUT("/cart/{cartSn}", accept(APPLICATION_JSON), handler::updateCart)
                 .DELETE("/cart/{cartSn}", accept(APPLICATION_JSON), handler::deleteCart)
+                .GET("/cartList", accept(APPLICATION_JSON), handler::getAllCart)
                 .build();
     }
 }

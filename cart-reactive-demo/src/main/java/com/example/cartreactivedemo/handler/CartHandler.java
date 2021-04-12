@@ -24,6 +24,14 @@ public class CartHandler {
                 .body(omCartFlux, OmCart.class);
     }
 
+
+    public Mono<ServerResponse> getAllCart(ServerRequest serverRequest) {
+        Flux<OmCart> omCartFlux = cartService.getCartListAll();
+
+        return ServerResponse.ok()
+                .body(omCartFlux, OmCart.class);
+    }
+
     public Mono<ServerResponse> getCartItem(ServerRequest serverRequest) {
         String cartSn = serverRequest.pathVariable("cartSn");
 
@@ -87,4 +95,5 @@ public class CartHandler {
         return ServerResponse.ok()
                 .body(omCartFlux, ProductListRes.class);
     }
+
 }
