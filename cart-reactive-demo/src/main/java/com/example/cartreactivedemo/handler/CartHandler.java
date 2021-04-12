@@ -32,6 +32,13 @@ public class CartHandler {
                 .switchIfEmpty(ServerResponse.notFound().build());
     }
 
+    public Mono<ServerResponse> getCartItemWithProd(ServerRequest serverRequest){
+        String cartSn = serverRequest.pathVariable("cartSn");
+        return cartService.findByCartSnWithProd(cartSn)
+                .flatMap(cart -> ServerResponse.ok().bodyValue(cart))
+                .switchIfEmpty(ServerResponse.notFound().build());
+    }
+
     public Mono<ServerResponse> insertCart(ServerRequest serverRequest) {
 
         Mono<OmCart> omCartMono = serverRequest.bodyToMono(OmCart.class)
@@ -68,8 +75,8 @@ public class CartHandler {
         String cartSn = serverRequest.pathVariable("cartSn");
 
         return cartService.getApiProdByCartSn(cartSn)
-                .flatMap(cart -> ServerResponse.ok().bodyValue(cart))
-                .switchIfEmpty(ServerResponse.notFound().build());
+                .flatMap(cart -> ServerResponse.ok().bodyValue(cart));
+//                .switchIfEmpty(ServerResponse.notFound().build());
     }
 
     public Mono<ServerResponse> getPrdtList(ServerRequest serverRequest) {

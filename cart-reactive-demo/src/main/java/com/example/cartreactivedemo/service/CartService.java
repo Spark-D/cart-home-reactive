@@ -21,4 +21,7 @@ public interface CartService {
     Mono<ProductRes> getApiProdByCartSn(String cartSn);
 
     Mono<ProductListRes> getGoodsList(Integer pageNo);
+
+    Mono<OmCart> findByCartSnWithProd(String cartSn);
+
 }

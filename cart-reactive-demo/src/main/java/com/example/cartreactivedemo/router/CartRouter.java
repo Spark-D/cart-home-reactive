@@ -28,6 +28,7 @@ public class CartRouter {
                 .GET("/productList/{pageNo}", accept(APPLICATION_JSON), handler::getPrdtList)
                 .GET("/cart", accept(APPLICATION_JSON), handler::getCartList)
                 .GET("cart/{cartSn}", accept(APPLICATION_JSON), handler::getCartItem)
+                .GET("cart/with/{cartSn}", accept(APPLICATION_JSON), handler::getCartItemWithProd)
                 .GET("cart/prod/{cartSn}", accept(APPLICATION_JSON), handler::getCartItemToProd)
                 .POST("/cart", accept(APPLICATION_JSON), handler::insertCart)
                 .PUT("/cart/{cartSn}", accept(APPLICATION_JSON), handler::updateCart)

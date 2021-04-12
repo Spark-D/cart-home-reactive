@@ -5,18 +5,24 @@ import com.example.cartreactivedemo.dto.api.ProductListRes;
 import com.example.cartreactivedemo.dto.api.ProductReq;
 import com.example.cartreactivedemo.dto.api.ProductRes;
 import com.example.cartreactivedemo.repository.CartRepository;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.reactivestreams.Publisher;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
+import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @Service
+@RequiredArgsConstructor
 @Slf4j
 public class CartServiceImpl implements CartService {
 
@@ -54,31 +60,35 @@ public class CartServiceImpl implements CartService {
     @Override
     public Mono<ProductRes> getApiProdByCartSn(String cartSn) {
 
-        List<ProductReq> productReq= new ArrayList<>();
-        ProductReq req = new ProductReq();
-        req.setSitmNo("LE1206861333");
-        req.setSpdNo("LE1206861333_1237518036");
-        productReq.add(req);
+        Flux<ProductReq> prdReq = cartRepository.findById(cartSn)
+                .flatMapMany( cart -> {
+                    ProductReq req = new ProductReq();
+                    BeanUtils.copyProperties(req, cart);
+                    return Flux.just(req);
+                });
 
-        log.info("productReq : {}", productReq);
-
-//        Mono<List<ProductReq>> m = Mono.just(productReq);
         Mono<ProductRes> result = webClient
                 .post()
                 .uri("https://pbf.lotteon.com/product/v1/detail/productDetailList?dataType=LIGHT2")
                 .contentType(MediaType.APPLICATION_JSON)
                 .accept(MediaType.APPLICATION_JSON)
-                .body(Mono.just(productReq).flatMapMany(Flux::fromIterable), ProductReq.class )
+                .body(prdReq, ProductReq.class )
                 .retrieve()
-                .onStatus(status -> status.is5xxServerError() || status.is4xxClientError()
-                    , clientResponse ->
-                        clientResponse.bodyToMono(String.class)
-                                .map(body -> new RuntimeException(body))
-                            )
                 .bodyToMono(ProductRes.class)
                 .log();
 
         return result;
+    }
+
+    private Flux<ProductReq> getBodyData(String cartSn){
+        Flux<ProductReq> prdReq = cartRepository.findById(cartSn)
+                .flatMapMany( cart -> {
+                    ProductReq req = new ProductReq();
+                    BeanUtils.copyProperties(req, cart);
+                    return Flux.just(req);
+                }).log();
+
+        return prdReq;
     }
 
     @Override
@@ -97,5 +107,32 @@ public class CartServiceImpl implements CartService {
                 .log();
     }
 
+    @Override
+    public Mono<OmCart> findByCartSnWithProd(String cartSn) {
+        return cartRepository.findById(cartSn)
+                .flatMap(this::getProductByCartSn);
 
+    }
+
+    private Mono<OmCart> getProductByCartSn(OmCart omCart) {
+        return Mono.just(omCart)
+                .zipWith(this.getProdInfo(omCart).collectList())
+                .map(combine -> combine.getT1().withProduct(combine.getT2().get(0)));
+
+    }
+
+    private Flux<ProductRes> getProdInfo(OmCart omCart){
+        return webClient
+                .mutate()
+                .baseUrl("https://pbf.lotteon.com/product")
+                .build()
+                .post()
+                .uri("/v1/detail/productDetailList?dataType=LIGHT2")
+                .contentType(MediaType.APPLICATION_JSON)
+                .accept(MediaType.APPLICATION_JSON)
+                .body(Flux.just(omCart), OmCart.class)
+                .retrieve()
+                .bodyToFlux(ProductRes.class)
+                .log();
+    }
 }

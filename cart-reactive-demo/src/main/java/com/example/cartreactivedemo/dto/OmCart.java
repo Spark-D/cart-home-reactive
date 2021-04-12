@@ -1,14 +1,18 @@
 package com.example.cartreactivedemo.dto;
 
+import com.example.cartreactivedemo.dto.api.ProductRes;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.With;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.Transient;
 import org.springframework.data.relational.core.mapping.Table;
 
 import javax.swing.*;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Data
 @Table("om_cart")
@@ -32,5 +36,15 @@ public class OmCart {
 
     public String getId() {
         return this.cartSn;
+    }
+
+    @Transient
+    @With
+    private ProductRes product;
+
+    @Override
+    @Transient
+    protected Object clone() throws CloneNotSupportedException {
+        return super.clone();
     }
 }
