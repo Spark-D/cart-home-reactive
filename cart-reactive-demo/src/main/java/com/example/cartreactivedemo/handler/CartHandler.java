@@ -2,13 +2,22 @@ package com.example.cartreactivedemo.handler;
 
 import com.example.cartreactivedemo.dto.OmCart;
 import com.example.cartreactivedemo.dto.api.ProductListRes;
+import com.example.cartreactivedemo.dto.api.ProductReq;
+import com.example.cartreactivedemo.dto.api.ProductRes;
 import com.example.cartreactivedemo.service.CartService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
+import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 
 @Component
 public class CartHandler {
@@ -73,10 +82,10 @@ public class CartHandler {
 
     public Mono<ServerResponse> getCartItemToProd(ServerRequest serverRequest) {
         String cartSn = serverRequest.pathVariable("cartSn");
+        Mono<Map>  result = cartService.getApiProdByCartSn(cartSn);
 
-        return cartService.getApiProdByCartSn(cartSn)
-                .flatMap(cart -> ServerResponse.ok().bodyValue(cart));
-//                .switchIfEmpty(ServerResponse.notFound().build());
+        return ServerResponse.ok()
+                .body(result, Map.class);
     }
 
     public Mono<ServerResponse> getPrdtList(ServerRequest serverRequest) {
@@ -87,4 +96,20 @@ public class CartHandler {
         return ServerResponse.ok()
                 .body(omCartFlux, ProductListRes.class);
     }
+
+    public Mono<ServerResponse> test(ServerRequest request){
+        return request.bodyToFlux(ProductRes.class)
+                .flatMap(data ->
+                        WebClient.create("https://pbf.lotteon.com/product/v1/detail/productDetailList?dataType=LIGHT2")
+                                .post()
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .body(Flux.just(data), ProductReq.class)
+                                .retrieve()
+                                .bodyToMono(Map.class)
+                )
+                .collectList()
+                .flatMap(ServerResponse.ok()::bodyValue);
+    }
+
+
 }

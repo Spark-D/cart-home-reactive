@@ -6,6 +6,9 @@ import com.example.cartreactivedemo.dto.api.ProductRes;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.util.List;
+import java.util.Map;
+
 
 public interface CartService {
     Flux<OmCart> getCartList();
@@ -18,7 +21,7 @@ public interface CartService {
 
     Mono<Void> deleteCart(String cartSn);
 
-    Mono<ProductRes> getApiProdByCartSn(String cartSn);
+    Mono<Map>  getApiProdByCartSn(String cartSn);
 
     Mono<ProductListRes> getGoodsList(Integer pageNo);
 

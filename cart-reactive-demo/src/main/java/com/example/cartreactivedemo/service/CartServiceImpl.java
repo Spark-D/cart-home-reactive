@@ -58,23 +58,28 @@ public class CartServiceImpl implements CartService {
     }
 
     @Override
-    public Mono<ProductRes> getApiProdByCartSn(String cartSn) {
+    public Mono<Map> getApiProdByCartSn(String cartSn) {
 
-        Flux<ProductReq> prdReq = cartRepository.findById(cartSn)
-                .flatMapMany( cart -> {
-                    ProductReq req = new ProductReq();
-                    BeanUtils.copyProperties(req, cart);
-                    return Flux.just(req);
-                });
+//        Flux<ProductReq> prdReq = cartRepository.findById(cartSn)
+//                .flatMapMany( cart -> {
+//                    ProductReq req = new ProductReq();
+//                    BeanUtils.copyProperties(req, cart);
+//                    return Flux.just(req);
+//                });
+        List<ProductReq> reqList = new ArrayList<>();
+        ProductReq req = new ProductReq("LE1206861333","LE1206861333_1237518036");
+        reqList.add(req);
 
-        Mono<ProductRes> result = webClient
+        Mono<Map> result = WebClient.create()
                 .post()
                 .uri("https://pbf.lotteon.com/product/v1/detail/productDetailList?dataType=LIGHT2")
                 .contentType(MediaType.APPLICATION_JSON)
                 .accept(MediaType.APPLICATION_JSON)
-                .body(prdReq, ProductReq.class )
+                .body(Flux.just(reqList), ProductReq.class)
+//                .bodyValue(reqList)
+//                .body(prdReq.log(), ProductReq.class )
                 .retrieve()
-                .bodyToMono(ProductRes.class)
+                .bodyToMono(Map.class)
                 .log();
 
         return result;
@@ -111,7 +116,6 @@ public class CartServiceImpl implements CartService {
     public Mono<OmCart> findByCartSnWithProd(String cartSn) {
         return cartRepository.findById(cartSn)
                 .flatMap(this::getProductByCartSn);
-
     }
 
     private Mono<OmCart> getProductByCartSn(OmCart omCart) {
