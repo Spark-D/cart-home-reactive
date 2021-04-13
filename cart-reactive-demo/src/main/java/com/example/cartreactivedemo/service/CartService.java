@@ -27,4 +27,5 @@ public interface CartService {
 
     Mono<OmCart> findByCartSnWithProd(String cartSn);
 
+    Flux<OmCart> getCartListAll();
 }
