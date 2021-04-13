@@ -107,18 +107,16 @@ public class CartHandler {
 
 
     public Mono<ServerResponse> test(ServerRequest request){
-        return request.bodyToFlux(ProductRes.class)
+        return request.bodyToFlux(OmCart.class)
                 .flatMap(data ->
-                        WebClient.create("https://pbf.lotteon.com/product/v1/detail/productDetailList?dataType=LIGHT2")
-                                .post()
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .body(Flux.just(data), ProductReq.class)
-                                .retrieve()
-                                .bodyToMono(Map.class)
+                        cartService.getProdMapList(data)
                 )
                 .collectList()
                 .flatMap(ServerResponse.ok()::bodyValue);
     }
+
+
+
 
 
 }

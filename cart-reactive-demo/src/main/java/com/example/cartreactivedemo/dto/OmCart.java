@@ -13,6 +13,7 @@ import org.springframework.data.relational.core.mapping.Table;
 import javax.swing.*;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 @Data
 @Table("om_cart")
@@ -40,7 +41,7 @@ public class OmCart {
 
     @Transient
     @With
-    private ProductRes product;
+    private Object product;
 
     @Override
     @Transient

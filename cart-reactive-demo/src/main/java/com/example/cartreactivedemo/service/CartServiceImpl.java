@@ -123,11 +123,22 @@ public class CartServiceImpl implements CartService {
         return getCartListWithProductList();
     }
 
+    @Override
+    public Flux<Map> getProdMapList(OmCart data) {
+        return WebClient.create("https://pbf.lotteon.com/product/v1/detail/productDetailList?dataType=LIGHT2")
+                        .post()
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .body(Flux.just(data), OmCart.class)
+                        .retrieve()
+                        .bodyToFlux(Map.class).log("after map------------>>");
+    }
+
+
     private Flux<OmCart> getCartListWithProductList() {
         Flux<OmCart> cartList = cartRepository.findAll();
-        Flux<ProductRes> cartListWithProduct = cartList
-                .flatMap(cart-> this.getProdInfo(cart));
-        return Flux.zip(cartList , cartListWithProduct, (t1,t2)-> t1.withProduct(t2));
+        Flux<List<Map>> cartListWithProduct = cartList
+                .flatMap(cart-> this.getProdMapList(cart).collectList());
+        return Flux.zip(cartList , cartListWithProduct,(t1,t2)-> t1.withProduct(t2.get(0).get("data")));
     }
 
     private Mono<OmCart> getProductByCartSn(OmCart omCart) {
@@ -137,18 +148,22 @@ public class CartServiceImpl implements CartService {
 
     }
 
-    private Flux<ProductRes> getProdInfo(OmCart omCart){
-        return webClient
-                .mutate()
-                .baseUrl("https://pbf.lotteon.com/product")
-                .build()
-                .post()
-                .uri("/v1/detail/productDetailList?dataType=LIGHT2")
-                .contentType(MediaType.APPLICATION_JSON)
-                .accept(MediaType.APPLICATION_JSON)
-                .body(Flux.just(omCart), OmCart.class)
-                .retrieve()
-                .bodyToFlux(ProductRes.class)
-                .log();
+    private Flux<Map> getProdInfo(OmCart omCart){
+        return Flux.just(omCart)
+                .log("getProdInfo request >>>>>>>>>>>>>>>>>>>>>>>")
+                .flatMap(data -> webClient.mutate()
+                                .baseUrl("https://pbf.lotteon.com/product")
+                                .build()
+                                .post()
+                                .uri("/v1/detail/productDetailList?dataType=LIGHT2")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .accept(MediaType.APPLICATION_JSON)
+                                .bodyValue(data)
+//                                .body(data, OmCart.class)
+                                .retrieve()
+                                .bodyToFlux(Map.class)
+                                .log("getProdInfo response >>>>>>>>>>>>>>>>>>>>>>>"));
+
+
     }
 }

@@ -3,6 +3,8 @@ package com.example.cartreactivedemo.service;
 import com.example.cartreactivedemo.dto.OmCart;
 import com.example.cartreactivedemo.dto.api.ProductListRes;
 import com.example.cartreactivedemo.dto.api.ProductRes;
+import org.reactivestreams.Publisher;
+import org.reactivestreams.Subscriber;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -28,4 +30,6 @@ public interface CartService {
     Mono<OmCart> findByCartSnWithProd(String cartSn);
 
     Flux<OmCart> getCartListAll();
+
+    Flux<Map> getProdMapList(OmCart data);
 }
