@@ -48,4 +48,14 @@ public class OmCart {
     protected Object clone() throws CloneNotSupportedException {
         return super.clone();
     }
+
+    public OmCart(String cartSn, String trNo, String lrtrNo, String sitmNo, int odQty, LocalDateTime regDttm) {
+        this.cartSn = cartSn;
+        this.trNo = trNo;
+        this.lrtrNo = lrtrNo;
+        this.sitmNo = sitmNo;
+        this.odQty = odQty;
+        this.regDttm = regDttm;
+    }
+
 }

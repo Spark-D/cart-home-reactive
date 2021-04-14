@@ -1,5 +1,6 @@
 package com.example.cartreactivedemo.service;
 
+import com.example.cartreactivedemo.dto.DvGroup;
 import com.example.cartreactivedemo.dto.OmCart;
 import com.example.cartreactivedemo.dto.api.ProductListRes;
 import com.example.cartreactivedemo.dto.api.ProductRes;
@@ -32,4 +33,6 @@ public interface CartService {
     Flux<OmCart> getCartListAll();
 
     Flux<Map> getProdMapList(OmCart data);
+
+    Mono<List<DvGroup>> getCartGroupedListAll();
 }

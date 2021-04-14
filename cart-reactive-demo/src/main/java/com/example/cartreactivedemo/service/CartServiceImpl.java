@@ -1,5 +1,6 @@
 package com.example.cartreactivedemo.service;
 
+import com.example.cartreactivedemo.dto.DvGroup;
 import com.example.cartreactivedemo.dto.OmCart;
 import com.example.cartreactivedemo.dto.api.ProductListRes;
 import com.example.cartreactivedemo.dto.api.ProductReq;
@@ -18,6 +19,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 
@@ -138,8 +140,37 @@ public class CartServiceImpl implements CartService {
         Flux<OmCart> cartList = cartRepository.findAll();
         Flux<List<Map>> cartListWithProduct = cartList
                 .flatMap(cart-> this.getProdMapList(cart).collectList());
-        return Flux.zip(cartList , cartListWithProduct,(t1,t2)-> t1.withProduct(t2.get(0).get("data")));
+        return Flux.zip(cartList,cartListWithProduct,(t1,t2)-> t1.withProduct(t2.get(0).get("data")));
     }
+
+    @Override
+    public Mono<List<DvGroup>> getCartGroupedListAll() {
+        return getDvGroupList();
+    }
+
+
+    private Mono<List<DvGroup>> getDvGroupList() {
+        Flux<OmCart> cartList = cartRepository.findAll();
+        Flux<List<Map>> cartListWithProduct = cartList
+                .flatMap(cart-> this.getProdMapList(cart).collectList());
+
+        return Flux.zip(cartList,cartListWithProduct,(t1,t2)-> t1.withProduct(t2.get(0).get("data")))
+                .sort(Comparator.comparing(OmCart::getRegDttm).reversed())
+                .groupBy(cart -> cart.getTrNo())
+                .concatMap( trNo -> {
+                    Mono<DvGroup> mono = trNo.collectList()
+                            .map( list -> {
+                                DvGroup dvGroup = new DvGroup();
+                                dvGroup.setTrNo(trNo.key());
+                                dvGroup.setOmCartList(list);
+                                dvGroup.setRegDttm(list.stream().sorted(Comparator.comparing(OmCart::getRegDttm).reversed()).findFirst().orElse(new OmCart()).getRegDttm());
+                                return dvGroup;
+                            });
+                    return mono;
+                }).collectList();
+    }
+
+
 
     private Mono<OmCart> getProductByCartSn(OmCart omCart) {
         return Mono.just(omCart)
@@ -163,7 +194,7 @@ public class CartServiceImpl implements CartService {
                                 .retrieve()
                                 .bodyToFlux(Map.class)
                                 .log("getProdInfo response >>>>>>>>>>>>>>>>>>>>>>>"));
-
-
     }
+
+
 }

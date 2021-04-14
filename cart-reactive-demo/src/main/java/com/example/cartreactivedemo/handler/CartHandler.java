@@ -1,5 +1,6 @@
 package com.example.cartreactivedemo.handler;
 
+import com.example.cartreactivedemo.dto.DvGroup;
 import com.example.cartreactivedemo.dto.OmCart;
 import com.example.cartreactivedemo.dto.api.ProductListRes;
 import com.example.cartreactivedemo.dto.api.ProductReq;
@@ -115,6 +116,12 @@ public class CartHandler {
                 .flatMap(ServerResponse.ok()::bodyValue);
     }
 
+    public Mono<ServerResponse> getGroupedCart(ServerRequest request){
+        Mono<List<DvGroup>> omCartListMono = cartService.getCartGroupedListAll();
+
+        return ServerResponse.ok()
+                .body(omCartListMono, DvGroup.class);
+    }
 
 
 
