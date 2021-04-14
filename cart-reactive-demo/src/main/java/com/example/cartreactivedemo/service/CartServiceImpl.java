@@ -72,7 +72,7 @@ public class CartServiceImpl implements CartService {
         ProductReq req = new ProductReq("LE1206861333","LE1206861333_1237518036");
         reqList.add(req);
 
-        Mono<Map> result = WebClient.create()
+        Mono<Map> result = webClient
                 .post()
                 .uri("https://pbf.lotteon.com/product/v1/detail/productDetailList?dataType=LIGHT2")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -127,12 +127,12 @@ public class CartServiceImpl implements CartService {
 
     @Override
     public Flux<Map> getProdMapList(OmCart data) {
-        return WebClient.create("https://pbf.lotteon.com/product/v1/detail/productDetailList?dataType=LIGHT2")
-                        .post()
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .body(Flux.just(data), OmCart.class)
-                        .retrieve()
-                        .bodyToFlux(Map.class).log("after map------------>>");
+        return webClient.post()
+                .uri("https://pbf.lotteon.com/product/v1/detail/productDetailList?dataType=LIGHT2")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(Flux.just(data), OmCart.class)
+                .retrieve()
+                .bodyToFlux(Map.class).log("after map------------>>");
     }
 
 
