@@ -11,6 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.reactivestreams.Publisher;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.BodyInserters;
@@ -101,15 +102,25 @@ public class CartServiceImpl implements CartService {
     @Override
     public Mono<ProductListRes> getGoodsList(Integer pageNo) {
 
+        //기존 설정값을 상속해서 사용할 수 있는 mutate() 함수를 제공
         return webClient
                 .mutate()
+                .defaultHeader("user-agent", "WebClient")
                 .baseUrl("https://www.lotteon.com/p/display")
                 .build()
                 .get()
                 .uri("/category/seltCatePdWishListAjax?pdSortCd=01&pageNo={pageNo}&rowsPerPage=60&dshopNo=22276", pageNo)
                 .accept(MediaType.APPLICATION_JSON)
-//                .header(HttpHeaders.AUTHORIZATION)
+                .header(HttpHeaders.AUTHORIZATION, "Bearer ***Token")
+                //retrieve 를 이용하면 바로 ResponseBody를 처리 할 수 있고, exchange 를 이용하면 세세한 컨트롤이 가능
+                //Spring에서는 exchange 를 이용하게 되면 Response 컨텐츠에 대한 모든 처리를 직접 하면서 발생할 수 있는 memory leak(누수) 가능성 때문에 가급적 retrieve 를 사용하기를 권고
                 .retrieve()
+                //각 상태코드에 따라 임의의 처리를 하거나 Exception 을 랩핑하고 싶을 때는 onStatus() 함수를 사용하여 해결 할 수 있습니다.
+                .onStatus(status -> status.is4xxClientError()
+                                || status.is5xxServerError()
+                        , clientResponse ->
+                                clientResponse.bodyToMono(String.class)
+                                        .map(body -> new RuntimeException(body)))
                 .bodyToMono(ProductListRes.class)
                 .log();
     }
@@ -127,10 +138,19 @@ public class CartServiceImpl implements CartService {
 
     @Override
     public Flux<Map> getProdMapList(OmCart data) {
-        return webClient.post()
-                .uri("https://pbf.lotteon.com/product/v1/detail/productDetailList?dataType=LIGHT2")
+        return webClient
+                .mutate()
+                .baseUrl("https://pbf.lotteon.com")
+                .build()
+                .post()
+                .uri("/product/v1/detail/productDetailList?dataType=LIGHT2")
                 .contentType(MediaType.APPLICATION_JSON)
+                //Mono 나 Flux 객체를 통해 RequestBody시 사용하는 RequestBodySpec
                 .body(Flux.just(data), OmCart.class)
+                //form 데이터 전송시 BodyInserters.fromFormData() 또는 bodyValue(MultiValueMap<String, String>) 로 데이터 전송
+                //.body(BodyInserters.fromFormData("id", idValue)
+                //                            .with("pwd", pwdValue)
+                //         )
                 .retrieve()
                 .bodyToFlux(Map.class).log("after map------------>>");
     }

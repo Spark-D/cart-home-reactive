@@ -13,6 +13,7 @@ import reactor.core.publisher.Mono;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class WebClientExample {
 
@@ -27,14 +28,16 @@ public class WebClientExample {
 
         WebClient client = WebClient.create();
 
-        Flux<ProductRes> res = client.post()
+        client.post()
                 .uri("https://pbf.lotteon.com/product/v1/detail/productDetailList?dataType=LIGHT2")
                 .accept(MediaType.APPLICATION_JSON)
-                .bodyValue(prdList)
+//                .bodyValue(prdList)
+                .body(Mono.just(prdList), ProductReq.class)
                 .retrieve()
-                .bodyToFlux(ProductRes.class);
+                .bodyToMono(Map.class)
+                .subscribe(data -> System.out.println(data));
 
-        res.subscribe(System.out::println);
+//        res.subscribe(System.out::println);
     }
 
 }

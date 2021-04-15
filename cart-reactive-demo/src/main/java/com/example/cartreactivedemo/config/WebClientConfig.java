@@ -24,14 +24,19 @@ public class WebClientConfig {
     @Bean
     public WebClient webClient() {
 
-
+        // Spring WebFlux 에서는 어플리케이션 메모리 문제를 피하기 위해 codec 처리를 위한 in-memory buffer 값이 256KB로 기본설정 되어 있습니다.
+        //이 제약 때문에 256KB보다 큰 HTTP 메시지를 처리하려고 하면 DataBufferLimitException 에러가 발생하게 됩니다.
+        //이 값을 늘려주기 위해서는 ExchageStrategies.builder() 를 통해 값을 늘려줘야 합니다.
         ExchangeStrategies exchangeStrategies = ExchangeStrategies.builder()
                 .codecs(configurer -> configurer.defaultCodecs().maxInMemorySize(1024*1024*50))
                 .build();
+
+        //개발 진행 시 Request/Response 정보를 상세히 확인하기 위해서는 ExchageStrateges 와 logging level 설정을 통해 로그 확인이 가능하도록 해 주는 것이 좋습니다.
         exchangeStrategies
                 .messageWriters().stream()
+                //Request 또는 Response 데이터에 대해 조작을 하거나 추가 작업을 하기 위해서는 WebClient.builder().filter() 메소드를 이용
                 .filter(LoggingCodecSupport.class::isInstance)
-                .forEach(writer -> ((LoggingCodecSupport)writer).setEnableLoggingRequestDetails(true));
+                .forEach(writer -> ((LoggingCodecSupport)writer).setEnableLoggingRequestDetails(true));// 로깅사용여부
 
         return WebClient.builder()
                 .clientConnector(
@@ -59,6 +64,7 @@ public class WebClientConfig {
                 )
                 .exchangeStrategies(exchangeStrategies)
                 .filter(ExchangeFilterFunction.ofRequestProcessor(
+                        //요청 메소드, url, 헤더 정보 로깅
                         clientRequest -> {
                             log.info("Request: {} {}", clientRequest.method(), clientRequest.url());
                             clientRequest.headers().forEach((name, values) -> values.forEach(value -> log.info("{} : {}", name, value)));
@@ -67,6 +73,7 @@ public class WebClientConfig {
                 ))
                 .filter(ExchangeFilterFunction.ofResponseProcessor(
                         clientResponse -> {
+                            //응답 헤더 로깅
                             clientResponse.headers().asHttpHeaders().forEach((name, values) -> values.forEach(value -> log.info("{} : {}", name, value)));
                             return Mono.just(clientResponse);
                         }
