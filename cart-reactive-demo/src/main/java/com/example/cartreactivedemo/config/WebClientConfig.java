@@ -16,6 +16,10 @@ import org.springframework.web.reactive.function.client.ExchangeStrategies;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 import reactor.netty.http.client.HttpClient;
+import reactor.netty.resources.ConnectionProvider;
+
+import java.time.Duration;
+import java.util.concurrent.TimeUnit;
 
 @Configuration
 @Slf4j
@@ -38,11 +42,22 @@ public class WebClientConfig {
                 .filter(LoggingCodecSupport.class::isInstance)
                 .forEach(writer -> ((LoggingCodecSupport)writer).setEnableLoggingRequestDetails(true));// 로깅사용여부
 
+        //Connection pool Timeout 설정
+        ConnectionProvider provider =
+                ConnectionProvider.builder("custom")
+                        .maxConnections(50)
+                        .maxIdleTime(Duration.ofSeconds(20)) //최대 유효 커넥션유지 시간. 대상서버의 타임아웃 시간을 고려해서 설정해야함. 디폴트 설정되지않음.
+                        .maxLifeTime(Duration.ofSeconds(60)) //커넥션이 유지되는 최대시간. 디폴트 설정되지않음
+                        .pendingAcquireTimeout(Duration.ofSeconds(60)) //pending 되있는 획득?작업이 완료되지 않으면,PoolAcquireTimeoutException 이 발생.디폴트 45s.
+                        .evictInBackground(Duration.ofSeconds(120))// evictInBackground 를 설정해서 연결에 대한 주기적인 검사를 수행. 2분마다 커넥션풀에서 제거할수있는 연결을 정기적으로 확인
+                        .build();
+
         return WebClient.builder()
+                .baseUrl("https://pbf.lotteon.com")
                 .clientConnector(
                         new ReactorClientHttpConnector(
                                 HttpClient
-                                        .create()
+                                        .create(provider)
                                         .secure(
                                                 ThrowingConsumer.unchecked(
                                                         sslContextSpec -> sslContextSpec.sslContext(
@@ -53,13 +68,16 @@ public class WebClientConfig {
                                                         )
                                                 )
                                         )
-                                        .tcpConfiguration(
-                                                client -> client.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 120_000)
-                                                        .doOnConnected(
-                                                                conn -> conn.addHandlerLast(new ReadTimeoutHandler(180))
-                                                                        .addHandlerLast(new WriteTimeoutHandler(180))
-                                                        )
-                                        )
+                                        .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 10000)
+                                        .doOnConnected(conn ->
+                                                conn.addHandler(new ReadTimeoutHandler(10, TimeUnit.SECONDS)))
+//                                        .tcpConfiguration(
+//                                                client -> client.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 120_000)
+//                                                        .doOnConnected(
+//                                                                conn -> conn.addHandlerLast(new ReadTimeoutHandler(180))
+//                                                                        .addHandlerLast(new WriteTimeoutHandler(180))
+//                                                        )
+//                                        )
                         )
                 )
                 .exchangeStrategies(exchangeStrategies)

@@ -24,6 +24,7 @@ public class CallbackConfig implements BeforeConvertCallback<OmCart>, BeforeSave
     @Override
     public Publisher<OmCart> onBeforeConvert(OmCart entity, SqlIdentifier table) {
         System.out.println("onBeforeConvert!!!!!!!!!!!!!!!!"+ table);
+        // TODO: 2021-04-16  Auditing
         if (entity.getCartSn() == null || entity.getCartSn() == "") {
             return repository.getSeq().map(seq -> {
                 entity.setRegDttm(LocalDateTime.now());

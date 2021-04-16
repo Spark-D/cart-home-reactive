@@ -75,7 +75,7 @@ public class CartServiceImpl implements CartService {
 
         Mono<Map> result = webClient
                 .post()
-                .uri("https://pbf.lotteon.com/product/v1/detail/productDetailList?dataType=LIGHT2")
+                .uri("/product/v1/detail/productDetailList?dataType=LIGHT2")
                 .contentType(MediaType.APPLICATION_JSON)
                 .accept(MediaType.APPLICATION_JSON)
                 .body(Flux.just(reqList), ProductReq.class)
@@ -105,11 +105,11 @@ public class CartServiceImpl implements CartService {
         //기존 설정값을 상속해서 사용할 수 있는 mutate() 함수를 제공
         return webClient
                 .mutate()
+                .baseUrl("https://www.lotteon.com")
                 .defaultHeader("user-agent", "WebClient")
-                .baseUrl("https://www.lotteon.com/p/display")
                 .build()
                 .get()
-                .uri("/category/seltCatePdWishListAjax?pdSortCd=01&pageNo={pageNo}&rowsPerPage=60&dshopNo=22276", pageNo)
+                .uri("/p/display/category/seltCatePdWishListAjax?pdSortCd=01&pageNo={pageNo}&rowsPerPage=60&dshopNo=22276", pageNo)
                 .accept(MediaType.APPLICATION_JSON)
                 .header(HttpHeaders.AUTHORIZATION, "Bearer ***Token")
                 //retrieve 를 이용하면 바로 ResponseBody를 처리 할 수 있고, exchange 를 이용하면 세세한 컨트롤이 가능
@@ -140,7 +140,6 @@ public class CartServiceImpl implements CartService {
     public Flux<Map> getProdMapList(OmCart data) {
         return webClient
                 .mutate()
-                .baseUrl("https://pbf.lotteon.com")
                 .build()
                 .post()
                 .uri("/product/v1/detail/productDetailList?dataType=LIGHT2")
@@ -203,10 +202,9 @@ public class CartServiceImpl implements CartService {
         return Flux.just(omCart)
                 .log("getProdInfo request >>>>>>>>>>>>>>>>>>>>>>>")
                 .flatMap(data -> webClient.mutate()
-                                .baseUrl("https://pbf.lotteon.com/product")
                                 .build()
                                 .post()
-                                .uri("/v1/detail/productDetailList?dataType=LIGHT2")
+                                .uri("/product/v1/detail/productDetailList?dataType=LIGHT2")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .accept(MediaType.APPLICATION_JSON)
                                 .bodyValue(data)
@@ -215,6 +213,4 @@ public class CartServiceImpl implements CartService {
                                 .bodyToFlux(Map.class)
                                 .log("getProdInfo response >>>>>>>>>>>>>>>>>>>>>>>"));
     }
-
-
 }
