@@ -171,7 +171,7 @@ public class CartServiceImpl implements CartService {
     private Mono<List<DvGroup>> getDvGroupList() {
         Flux<OmCart> cartList = cartRepository.findAll();
         Flux<List<Map>> cartListWithProduct = cartList
-                .flatMap(cart-> this.getProdMapList(cart).collectList());
+                .concatMap(cart-> this.getProdMapList(cart).collectList());
 
         return Flux.zip(cartList,cartListWithProduct,(t1,t2)-> t1.withProduct(t2.get(0).get("data")))
                 .sort(Comparator.comparing(OmCart::getRegDttm).reversed())
