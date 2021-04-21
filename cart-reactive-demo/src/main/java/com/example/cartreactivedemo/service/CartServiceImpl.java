@@ -2,19 +2,18 @@ package com.example.cartreactivedemo.service;
 
 import com.example.cartreactivedemo.dto.DvGroup;
 import com.example.cartreactivedemo.dto.OmCart;
+import com.example.cartreactivedemo.dto.ReturnCode;
 import com.example.cartreactivedemo.dto.api.ProductListRes;
 import com.example.cartreactivedemo.dto.api.ProductReq;
-import com.example.cartreactivedemo.dto.api.ProductRes;
+import com.example.cartreactivedemo.dto.api.ReturnDto;
 import com.example.cartreactivedemo.repository.CartRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.reactivestreams.Publisher;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
-import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -42,7 +41,22 @@ public class CartServiceImpl implements CartService {
 
     @Override
     public Mono<OmCart> insertCart(OmCart omCart) {
-        return cartRepository.save(omCart);
+
+
+        return Mono.just(omCart)
+                .flatMap(cart-> this.getProdDtoList(omCart))
+                .map(x -> {
+                    System.out.println("******returnCode :::::" + x.getReturnCode());
+//                    System.out.println("******returnCode :::::" + x.getReturnCode() +" "+ ReturnCode.OK +  x.getReturnCode().equals(ReturnCode.OK.getCode()));
+                    if(!x.getReturnCode().equals(ReturnCode.OK.getCode())){
+                        log.info("상품정보 오류 : {}", x.getReturnCode());
+                        return omCart;
+                    }
+                    OmCart c = x.getData().get(0);
+                    BeanUtils.copyProperties(omCart, c, "trNo","lrtrNo"); // 원본, 복사대상
+                    return c;
+                })
+                .flatMap(cartRepository::save);
     }
 
     @Override
@@ -151,7 +165,26 @@ public class CartServiceImpl implements CartService {
                 //                            .with("pwd", pwdValue)
                 //         )
                 .retrieve()
-                .bodyToFlux(Map.class).log("after map------------>>");
+                .bodyToFlux(Map.class);
+//                .log("after map------------>>");
+    }
+
+    public Mono<ReturnDto> getProdDtoList(OmCart data) {
+        return webClient
+                .mutate()
+                .build()
+                .post()
+                .uri("/product/v1/detail/productDetailList?dataType=LIGHT2")
+                .contentType(MediaType.APPLICATION_JSON)
+                //Mono 나 Flux 객체를 통해 RequestBody시 사용하는 RequestBodySpec
+                .body(Flux.just(data), OmCart.class)
+                //form 데이터 전송시 BodyInserters.fromFormData() 또는 bodyValue(MultiValueMap<String, String>) 로 데이터 전송
+                //.body(BodyInserters.fromFormData("id", idValue)
+                //                            .with("pwd", pwdValue)
+                //         )
+                .retrieve()
+                .bodyToMono(ReturnDto.class)
+                .log("after return Dto------------>>");
     }
 
 

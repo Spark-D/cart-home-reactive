@@ -28,11 +28,12 @@ public class CallbackConfig implements BeforeConvertCallback<OmCart>, BeforeSave
         if (entity.getCartSn() == null || entity.getCartSn() == "") {
             return repository.getSeq().map(seq -> {
                 entity.setRegDttm(LocalDateTime.now());
+                entity.setModDttm(LocalDateTime.now());
                 entity.setCartSn(seq);
                 return entity;
             }).log("new sequence :::" + entity.toString());
         } else {
-            entity.setRegDttm(LocalDateTime.now());
+            entity.setModDttm(LocalDateTime.now());
             Mono<OmCart> modiTodo = Mono.just(entity);
             return modiTodo;
         }

@@ -93,6 +93,7 @@ public class WebClientConfig {
                         clientResponse -> {
                             //응답 헤더 로깅
                             clientResponse.headers().asHttpHeaders().forEach((name, values) -> values.forEach(value -> log.info("{} : {}", name, value)));
+//                            clientResponse.body().
                             return Mono.just(clientResponse);
                         }
                 ))

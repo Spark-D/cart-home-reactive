@@ -88,7 +88,7 @@ public class FluxExample {
                 })
                 .collectList()
                 .subscribe(data -> {
-//                    System.out.println(data);
+                    System.out.println(data);
         });
 
 
