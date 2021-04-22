@@ -6,8 +6,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.With;
-import org.springframework.data.annotation.Id;
-import org.springframework.data.annotation.Transient;
+import org.springframework.data.annotation.*;
 import org.springframework.data.relational.core.mapping.Table;
 
 import javax.swing.*;
@@ -23,6 +22,7 @@ public class OmCart {
 
     @Id
     private String cartSn;
+    @CreatedBy
     private String mbNo;
     private String trNo;
     private String lrtrNo;
@@ -30,8 +30,14 @@ public class OmCart {
     private String sitmNo;
     private Integer odQty;
 
+    @Transient
+    private String lrtrNm;
+
+    @CreatedDate
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss", timezone = "Asia/Seoul")
     private LocalDateTime regDttm;
+
+    @LastModifiedDate
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss", timezone = "Asia/Seoul")
     private LocalDateTime modDttm;
 

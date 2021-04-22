@@ -11,9 +11,12 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -40,6 +43,7 @@ public class CartServiceImpl implements CartService {
     }
 
     @Override
+    @Transactional(propagation = Propagation.REQUIRED , rollbackFor = Exception.class)
     public Mono<OmCart> insertCart(OmCart omCart) {
 
 
@@ -60,6 +64,7 @@ public class CartServiceImpl implements CartService {
     }
 
     @Override
+    @Transactional(propagation = Propagation.REQUIRED , rollbackFor = Exception.class)
     public Mono<OmCart> updateCart(OmCart omCart) {
         return cartRepository.save(omCart);
     }
@@ -70,6 +75,7 @@ public class CartServiceImpl implements CartService {
     }
 
     @Override
+    @Transactional(propagation = Propagation.REQUIRED , rollbackFor = Exception.class)
     public Mono<Void> deleteCart(String cartSn) {
         return cartRepository.deleteById(cartSn);
     }
@@ -219,7 +225,8 @@ public class CartServiceImpl implements CartService {
                                 return dvGroup;
                             });
                     return mono;
-                }).collectList();
+                })
+                .collectList();
     }
 
 

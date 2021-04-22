@@ -2,6 +2,7 @@ package com.example.cartreactivedemo.config;
 
 import com.example.cartreactivedemo.util.ThrowingConsumer;
 import io.netty.channel.ChannelOption;
+import io.netty.handler.logging.LogLevel;
 import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
 import io.netty.handler.timeout.ReadTimeoutHandler;
@@ -17,6 +18,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 import reactor.netty.http.client.HttpClient;
 import reactor.netty.resources.ConnectionProvider;
+import reactor.netty.transport.logging.AdvancedByteBufFormat;
 
 import java.time.Duration;
 import java.util.concurrent.TimeUnit;
@@ -71,6 +73,9 @@ public class WebClientConfig {
                                         .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 10000)
                                         .doOnConnected(conn ->
                                                 conn.addHandler(new ReadTimeoutHandler(10, TimeUnit.SECONDS)))
+                                        .wiretap("reactor.netty.http.client.HttpClient", // Netty Log 설정
+                                                LogLevel.INFO, AdvancedByteBufFormat.TEXTUAL
+                                        )
 //                                        .tcpConfiguration(
 //                                                client -> client.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 120_000)
 //                                                        .doOnConnected(
