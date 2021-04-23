@@ -50,8 +50,6 @@ public class CartServiceImpl implements CartService {
         return Mono.just(omCart)
                 .flatMap(cart-> this.getProdDtoList(omCart))
                 .map(x -> {
-                    System.out.println("******returnCode :::::" + x.getReturnCode());
-//                    System.out.println("******returnCode :::::" + x.getReturnCode() +" "+ ReturnCode.OK +  x.getReturnCode().equals(ReturnCode.OK.getCode()));
                     if(!x.getReturnCode().equals(ReturnCode.OK.getCode())){
                         log.info("상품정보 오류 : {}", x.getReturnCode());
                         return omCart;
@@ -99,11 +97,8 @@ public class CartServiceImpl implements CartService {
                 .contentType(MediaType.APPLICATION_JSON)
                 .accept(MediaType.APPLICATION_JSON)
                 .body(Flux.just(reqList), ProductReq.class)
-//                .bodyValue(reqList)
-//                .body(prdReq.log(), ProductReq.class )
                 .retrieve()
-                .bodyToMono(Map.class)
-                .log();
+                .bodyToMono(Map.class);
 
         return result;
     }
@@ -114,7 +109,7 @@ public class CartServiceImpl implements CartService {
                     ProductReq req = new ProductReq();
                     BeanUtils.copyProperties(req, cart);
                     return Flux.just(req);
-                }).log();
+                });
 
         return prdReq;
     }
@@ -141,8 +136,7 @@ public class CartServiceImpl implements CartService {
                         , clientResponse ->
                                 clientResponse.bodyToMono(String.class)
                                         .map(body -> new RuntimeException(body)))
-                .bodyToMono(ProductListRes.class)
-                .log();
+                .bodyToMono(ProductListRes.class);
     }
 
     @Override
@@ -172,7 +166,6 @@ public class CartServiceImpl implements CartService {
                 //         )
                 .retrieve()
                 .bodyToFlux(Map.class);
-//                .log("after map------------>>");
     }
 
     public Mono<ReturnDto> getProdDtoList(OmCart data) {
@@ -189,8 +182,7 @@ public class CartServiceImpl implements CartService {
                 //                            .with("pwd", pwdValue)
                 //         )
                 .retrieve()
-                .bodyToMono(ReturnDto.class)
-                .log("after return Dto------------>>");
+                .bodyToMono(ReturnDto.class);
     }
 
 
@@ -240,7 +232,6 @@ public class CartServiceImpl implements CartService {
 
     private Flux<Map> getProdInfo(OmCart omCart){
         return Flux.just(omCart)
-                .log("getProdInfo request >>>>>>>>>>>>>>>>>>>>>>>")
                 .flatMap(data -> webClient.mutate()
                                 .build()
                                 .post()
@@ -248,9 +239,8 @@ public class CartServiceImpl implements CartService {
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .accept(MediaType.APPLICATION_JSON)
                                 .bodyValue(data)
-//                                .body(data, OmCart.class)
                                 .retrieve()
                                 .bodyToFlux(Map.class)
-                                .log("getProdInfo response >>>>>>>>>>>>>>>>>>>>>>>"));
+                );
     }
 }
