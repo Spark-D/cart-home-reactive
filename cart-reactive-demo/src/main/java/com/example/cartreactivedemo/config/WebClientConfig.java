@@ -10,6 +10,7 @@ import io.netty.handler.timeout.WriteTimeoutHandler;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.MediaType;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.http.codec.LoggingCodecSupport;
 import org.springframework.web.reactive.function.client.ExchangeFilterFunction;
@@ -60,6 +61,7 @@ public class WebClientConfig {
                         new ReactorClientHttpConnector(
                                 HttpClient
                                         .create(provider)
+//                                        .wiretap(true)
                                         .secure(
                                                 ThrowingConsumer.unchecked(
                                                         sslContextSpec -> sslContextSpec.sslContext(
@@ -73,7 +75,8 @@ public class WebClientConfig {
                                         .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 10000)
                                         .doOnConnected(conn ->
                                                 conn.addHandler(new ReadTimeoutHandler(10, TimeUnit.SECONDS)))
-                                        .wiretap("reactor.netty.http.client.HttpClient", // Netty Log 설정
+                                        //https://www.baeldung.com/spring-log-webclient-calls#2-logging-with-netty-httpclient
+                                        .wiretap("reactor.netty.http.client.HttpClient", // netty body logging 설정
                                                 LogLevel.INFO, AdvancedByteBufFormat.TEXTUAL
                                         )
 //                                        .tcpConfiguration(
@@ -90,15 +93,14 @@ public class WebClientConfig {
                         //요청 메소드, url, 헤더 정보 로깅
                         clientRequest -> {
                             log.info("Request: {} {}", clientRequest.method(), clientRequest.url());
-                            clientRequest.headers().forEach((name, values) -> values.forEach(value -> log.info("{} : {}", name, value)));
+//                            clientRequest.headers().forEach((name, values) -> values.forEach(value -> log.info("{} : {}", name, value)));
                             return Mono.just(clientRequest);
                         }
                 ))
                 .filter(ExchangeFilterFunction.ofResponseProcessor(
                         clientResponse -> {
                             //응답 헤더 로깅
-                            clientResponse.headers().asHttpHeaders().forEach((name, values) -> values.forEach(value -> log.info("{} : {}", name, value)));
-//                            clientResponse.body().
+//                            clientResponse.headers().asHttpHeaders().forEach((name, values) -> values.forEach(value -> log.info("{} : {}", name, value)));
                             return Mono.just(clientResponse);
                         }
                 ))
