@@ -11,7 +11,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Bean;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
@@ -21,10 +20,12 @@ import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service
 @RequiredArgsConstructor
@@ -185,12 +186,58 @@ public class CartServiceImpl implements CartService {
                 .bodyToMono(ReturnDto.class);
     }
 
+    private static <T> Predicate<T> distinctByKeys(Function<? super T, ?>... keyExtractors)
+    {
+        final Map<List<?>, Boolean> seen = new ConcurrentHashMap<>();
+
+        return t ->
+        {
+            final List<?> keys = Arrays.stream(keyExtractors)
+                    .map(ke -> ke.apply(t))
+                    .collect(Collectors.toList());
+
+            return seen.putIfAbsent(keys, Boolean.TRUE) == null;
+        };
+    }
 
     private Flux<OmCart> getCartListWithProductList() {
+        //전체 카트리스트
         Flux<OmCart> cartList = cartRepository.findAll();
-        Flux<List<Map>> cartListWithProduct = cartList
-                .flatMap(cart-> this.getProdMapList(cart).collectList());
-        return Flux.zip(cartList,cartListWithProduct,(t1,t2)-> t1.withProduct(t2.get(0).get("data")));
+        //중복제거 후 상품정보 요청
+        Flux<ReturnDto> listFlux = getProductInfoMapList(cartList);
+
+        //mapping
+        return cartList.concatMap(c->{
+            return listFlux.concatMap(p -> {
+                log.info("cart >>>>>>{}", c );
+                p.getData().stream().forEach( api ->{
+                    if(api.getSitmNo().equals(c.getSitmNo()) && api.getSpdNo().equals(c.getSpdNo())){
+                        c.setProduct(api);
+                    }
+                });
+                return Flux.just(c);
+            });
+        });
+    }
+
+    private Flux<ReturnDto> getProductInfoMapList(Flux<OmCart> cartList) {
+
+        Mono<List<OmCart>> listMono = cartList.collectList().map(x -> {
+            return x.stream().filter(distinctByKeys(OmCart::getSpdNo, OmCart::getSitmNo))
+                    .collect(Collectors.toList());
+        });
+
+        return listMono.flatMapMany( data -> {
+            return webClient.mutate()
+                    .build()
+                    .post()
+                    .uri("/product/v1/detail/productDetailList?dataType=LIGHT2")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .accept(MediaType.APPLICATION_JSON)
+                    .bodyValue(data)
+                    .retrieve()
+                    .bodyToFlux(ReturnDto.class);
+        });
     }
 
     @Override
@@ -200,11 +247,13 @@ public class CartServiceImpl implements CartService {
 
 
     private Mono<List<DvGroup>> getDvGroupList() {
-        Flux<OmCart> cartList = cartRepository.findAll();
-        Flux<List<Map>> cartListWithProduct = cartList
-                .concatMap(cart-> this.getProdMapList(cart).collectList());
+//        Flux<OmCart> cartList = cartRepository.findAll();
+//        Flux<List<Map>> cartListWithProduct = cartList
+//                .concatMap(cart-> this.getProdMapList(cart).collectList());
 
-        return Flux.zip(cartList,cartListWithProduct,(t1,t2)-> t1.withProduct(t2.get(0).get("data")))
+        //등록일자 순 내림차순정렬
+        //trNo로 group by
+        return this.getCartListWithProductList()
                 .sort(Comparator.comparing(OmCart::getRegDttm).reversed())
                 .groupBy(cart -> cart.getTrNo())
                 .concatMap( trNo -> {
@@ -218,6 +267,7 @@ public class CartServiceImpl implements CartService {
                             });
                     return mono;
                 })
+                .sort(Comparator.comparing(DvGroup::getRegDttm).reversed())
                 .collectList();
     }
 

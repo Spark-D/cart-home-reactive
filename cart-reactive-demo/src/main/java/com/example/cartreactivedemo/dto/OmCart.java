@@ -49,6 +49,8 @@ public class OmCart {
     @With
     private Object product;
 
+    private boolean checked;
+
     @Override
     @Transient
     protected Object clone() throws CloneNotSupportedException {
@@ -63,5 +65,14 @@ public class OmCart {
         this.odQty = odQty;
         this.regDttm = regDttm;
     }
+
+    @Transient
+    private String spdNm;
+    @Transient
+    private String estmtDlvTxt;
+    @Transient
+    private Integer slPrc;
+    @Transient
+    private String returnCode;
 
 }
