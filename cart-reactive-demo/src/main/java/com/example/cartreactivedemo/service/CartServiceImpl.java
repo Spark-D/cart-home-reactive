@@ -242,11 +242,6 @@ public class CartServiceImpl implements CartService {
 
     @Override
     public Mono<List<DvGroup>> getCartGroupedListAll() {
-        return getDvGroupList();
-    }
-
-
-    private Mono<List<DvGroup>> getDvGroupList() {
 //        Flux<OmCart> cartList = cartRepository.findAll();
 //        Flux<List<Map>> cartListWithProduct = cartList
 //                .concatMap(cart-> this.getProdMapList(cart).collectList());
