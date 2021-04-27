@@ -27,6 +27,7 @@ public class CallbackConfig implements BeforeConvertCallback<OmCart>, BeforeSave
         if (entity.getCartSn() == null || entity.getCartSn() == "") {
             return repository.getSeq().map(seq -> {
                 entity.setCartSn(seq);
+                entity.setChecked(true);
                 return entity;
             }).log("new sequence :::" + entity.toString());
         } else {

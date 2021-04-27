@@ -246,6 +246,7 @@ public class CartServiceImpl implements CartService {
 //        Flux<List<Map>> cartListWithProduct = cartList
 //                .concatMap(cart-> this.getProdMapList(cart).collectList());
 
+        //카트리스트 + 상품api 조립
         //등록일자 순 내림차순정렬
         //trNo로 group by
         return this.getCartListWithProductList()
@@ -258,6 +259,7 @@ public class CartServiceImpl implements CartService {
                                 dvGroup.setTrNo(trNo.key());
                                 dvGroup.setOmCartList(list);
                                 dvGroup.setRegDttm(list.stream().sorted(Comparator.comparing(OmCart::getRegDttm).reversed()).findFirst().orElse(new OmCart()).getRegDttm());
+                                dvGroup.setChecked(list.stream().allMatch(OmCart::isChecked));
                                 return dvGroup;
                             });
                     return mono;
@@ -272,7 +274,6 @@ public class CartServiceImpl implements CartService {
         return Mono.just(omCart)
                 .zipWith(this.getProdInfo(omCart).collectList())
                 .map(combine -> combine.getT1().withProduct(combine.getT2().get(0)));
-
     }
 
     private Flux<Map> getProdInfo(OmCart omCart){
